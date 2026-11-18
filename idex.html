@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VJN.niko | Catálogo de Videos</title>
+  <style>
+    /* ============ VARIABLES DE COLOR (Tema oscuro tipo streaming) ============ */
+    :root {
+      --bg-main: #0a0e17;
+      --bg-card: #141b2d;
+      --bg-header: #0d1321;
+      --accent-cyan: #ae052f;
+      --accent-purple: #8b5cf6;
+      --accent-green: #10b981;
+      --text-main: #ffffff;
+      --text-muted: #8a94a6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+
+    /* ============ HEADER ============ */
+    header {
+      background: var(--bg-header);
+      padding: 15px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .logo .c-icon {
+      background: var(--accent-cyan);
+      color: #000;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    nav { display: flex; gap: 20px; flex-wrap: wrap; }
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    nav a:hover, nav a.active { color: var(--accent-cyan); }
+
+    .search-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(34,211,197,0.4);
+      border-radius: 25px;
+      padding: 8px 18px;
+      color: #fff;
+      width: 230px;
+      outline: none;
+    }
+    .search-box:focus { border-color: var(--accent-cyan); }
+
+    .user-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+
+    /* ============ LAYOUT PRINCIPAL (Grid + Sidebar) ============ */
+    .layout {
+      display: flex;
+      gap: 30px;
+      max-width: 1400px;
+      margin: 30px auto;
+      padding: 0 25px;
+    }
+    .main-content { flex: 1; }
+
+    .section-title {
+      font-size: 1.4rem;
+      margin-bottom: 25px;
+      padding-left: 12px;
+      border-left: 4px solid var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ============ GRID DE PÓSTERS ============ */
+    .poster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 20px;
+    }
+
+    .poster-card {
+      cursor: pointer;
+      transition: transform 0.25s;
+    }
+    .poster-card:hover { transform: translateY(-6px); }
+
+    .poster-img-wrap {
+      position: relative;
+      aspect-ratio: 2 / 3;
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+    .poster-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Badges */
+    .badge-hd {
+      position: absolute; top: 8px; left: 8px;
+      background: var(--accent-cyan);
+      color: #000;
+      font-size: 0.7rem; font-weight: bold;
+      padding: 3px 10px; border-radius: 12px;
+    }
+    .badge-year {
+      position: absolute; top: 32px; left: 8px;
+      background: var(--accent-purple);
+      color: #fff;
+      font-size: 0.7rem; font-weight: bold;
+      padding: 3px 10px; border-radius: 12px;
+    }
+    .badge-rating {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid var(--accent-green);
+      color: var(--accent-green);
+      font-size: 0.75rem; font-weight: bold;
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Icono de play al pasar el mouse */
+    .play-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.25s;
+    }
+    .poster-card:hover .play-overlay { opacity: 1; }
+    .play-overlay span {
+      font-size: 3rem; color: var(--accent-cyan);
+    }
+
+    .poster-title {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      text-align: center;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ============ SIDEBAR (Populares) ============ */
+    .sidebar {
+      width: 320px;
+      flex-shrink: 0;
+    }
+    .sidebar-tabs {
+      display: flex;
+      background: var(--bg-card);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    .sidebar-tabs button {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .sidebar-tabs button.active {
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    .popular-item {
+      display: flex;
+      gap: 12px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .popular-item:hover { background: #1a2338; }
+    .popular-item img {
+      width: 55px; height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+    .popular-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .popular-info h4 { font-size: 0.9rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .popular-info .year { color: var(--accent-purple); font-size: 0.8rem; }
+    .popular-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+    .popular-bottom .hd {
+      background: var(--accent-cyan); color: #000;
+      font-size: 0.65rem; font-weight: bold;
+      padding: 2px 8px; border-radius: 10px;
+    }
+    .popular-bottom .score { color: var(--accent-green); font-size: 0.8rem; font-weight: bold; }
+
+    /* ============ MODAL REPRODUCTOR ============ */
+    .modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      width: 100%;
+      max-width: 900px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 12px; right: 18px;
+      font-size: 2rem; color: #fff;
+      cursor: pointer; z-index: 10;
+      background: none; border: none;
+    }
+    .modal-body video, .modal-body iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+      display: block;
+      background: #000;
+    }
+    .modal-title {
+      padding: 15px 20px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--accent-cyan);
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .modal-body video, .modal-body iframe { height: 300px; }
+    }
+    @media (max-width: 600px) {
+      header { padding: 12px 15px; }
+      nav { display: none; }
+      .search-box { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header>
+    <div class="logo"><span class="-icon"></span> VJN.niko</div>
+    <nav>
+      <a href="#" class="active">🏠 Inicio</a>
+      <a href="#">📺 Series</a>
+      <a href="#">🎬 Películas</a>
+      <a href="#">✨ Anime</a>
+      <a href="#">🎭 Generos</a>
+      <a href="#">❤️ Mi-lista</a>
+    </nav>
+    <input type="text" class="search-box" placeholder="¿Qué deseas ver?" id="searchInput">
+    <div class="user-icon">👤</div>
+  </header>
+
+  <!-- ============ LAYOUT ============ -->
+  <div class="layout">
+    <div class="main-content">
+      <h2 class="section-title">Últimos Estrenos</h2>
+      <div class="poster-grid" id="posterGrid"></div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="sidebar-tabs">
+        <button class="active">PELÍCULAS</button>
+        <button>SERIES</button>
+      </div>
+      <div id="popularList"></div>
+    </aside>
+  </div>
+
+  <!-- ============ MODAL REPRODUCTOR ============ -->
+  <div class="modal" id="videoModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-title" id="modalTitle"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================================
+    // 🎬 TUS VIDEOS (AQUÍ AGREGAS TU CONTENIDO LEGAL)
+    // videoLocal: archivo .mp4 en tu carpeta | trailer: enlace embed de YouTube
+    // ==========================================================
+    const videos = [
+      { titulo: "Ver Misión submarino Online.", año: (2018), rating: 9.5, imagen: "misionsub.jpg", videoLocal: "Ver Misión submarino (2018) Online.mp4" },
+      { titulo: "t", año: 2024, rating: 8.8, imagen: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=600&fit=crop", trailer: "https://www.youtube.com/embed/VIDEO_ID" },
+      { titulo: "t", año: 2024, rating: 9.1, imagen: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=400&h=600&fit=crop", trailer: "https://www.youtube.com/embed/VIDEO_ID2" },
+      { titulo: "t", año: 2023, rating: 7.3, imagen: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=600&fit=crop", videoLocal: "detras-camaras.mp4" },
+      { titulo: "t", año: 2024, rating: 8.3, imagen: "https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?w=400&h=600&fit=crop", trailer: "https://www.youtube.com/embed/VIDEO_ID3" },
+      { titulo: "t", año: 2024, rating: 6.7, imagen: "https://images.unsplash.com/photo-1515630278258-407f66498911?w=400&h=600&fit=crop", videoLocal: "terror.mp4" }
+    ];
+
+    const grid = document.getElementById('posterGrid');
+    const popularList = document.getElementById('popularList');
+    const searchInput = document.getElementById('searchInput');
+
+    // Renderizar grid de pósters
+    function renderGrid(lista) {
+      grid.innerHTML = '';
+      if (lista.length === 0) {
+        grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;">No se encontraron videos.</p>';
+        return;
+      }
+      lista.forEach(v => {
+        const idx = videos.indexOf(v);
+        const card = document.createElement('div');
+        card.className = 'poster-card';
+        card.innerHTML = `
+          <div class="poster-img-wrap" onclick="abrirModal(${idx})">
+            <img src="${v.imagen}" alt="${v.titulo}" onerror="this.src='https://via.placeholder.com/300x450/141b2d/22d3c5?text=VJN'">
+            <span class="badge-hd">HD</span>
+            <span class="badge-year">${v.año}</span>
+            <span class="badge-rating">${v.rating}</span>
+            <div class="play-overlay"><span>▶</span></div>
+          </div>
+          <h3 class="poster-title">${v.titulo}</h3>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Renderizar sidebar de populares (top 5 por rating)
+    function renderPopulares() {
+      const top = [...videos].sort((a, b) => b.rating - a.rating).slice(0, 5);
+      popularList.innerHTML = top.map(v => {
+        const idx = videos.indexOf(v);
+        return `
+          <div class="popular-item" onclick="abrirModal(${idx})">
+            <img src="${v.imagen}" alt="${v.titulo}" onerror="this.src='https://via.placeholder.com/100x150/141b2d/22d3c5?text=VJN'">
+            <div class="popular-info">
+              <h4>${v.titulo}</h4>
+              <span class="year">${v.año}</span>
+              <div class="popular-bottom">
+                <span class="hd">HD</span>
+                <span class="score">${v.rating}/10</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Abrir modal con el reproductor correcto
+    function abrirModal(idx) {
+      const v = videos[idx];
+      const body = document.getElementById('modalBody');
+      document.getElementById('modalTitle').textContent = v.titulo;
+
+      if (v.videoLocal) {
+        body.innerHTML = `<video controls autoplay poster="${v.imagen}"><source src="${v.videoLocal}" type="video/mp4">Tu navegador no soporta videos.</video>`;
+      } else if (v.trailer) {
+        body.innerHTML = `<iframe src="${v.trailer}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      }
+      document.getElementById('videoModal').classList.add('active');
+    }
+
+    function cerrarModal() {
+      document.getElementById('videoModal').classList.remove('active');
+      document.getElementById('modalBody').innerHTML = ''; // Detiene el video al cerrar
+    }
+
+    // Cerrar modal con tecla ESC o clic fuera del contenido
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+    document.getElementById('videoModal').addEventListener('click', e => { if (e.target.id === 'videoModal') cerrarModal(); });
+
+    // Búsqueda en tiempo real
+    searchInput.addEventListener('input', e => {
+      const texto = e.target.value.toLowerCase();
+      renderGrid(videos.filter(v => v.titulo.toLowerCase().includes(texto)));
+    });
+
+    // Inicializar
+    renderGrid(videos);
+    renderPopulares();
+  </script>
+</body>
+</html>
